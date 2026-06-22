@@ -110,8 +110,8 @@ export function PaywallPage() {
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl p-4 mb-6 text-center">
               <p className="text-sm text-amber-800 dark:text-amber-300">
                 After payment, WhatsApp your payment screenshot to{' '}
-                <a href="https://wa.me/91XXXXXXXXXX" className="font-bold underline">+91XXXXXXXXXX</a>
-                {' '}and we'll activate your account within 2 hours.
+                <a href="https://wa.me/916200616314" className="font-bold underline">+91XXXXXXXXXX</a>
+                {' '}and we'll activate your account within 10 minutes.
               </p>
             </div>
 
