@@ -15,6 +15,7 @@ import { RevisionPlanner } from './components/revision/RevisionPlanner'
 import { FocusMode } from './components/focus/FocusMode'
 import { Goals } from './components/goals/Goals'
 import { Analytics } from './components/analytics/Analytics'
+import { PaywallPage } from './pages/PaywallPage'
 
 interface DashboardProps {
   user: User
@@ -38,6 +39,7 @@ const SECTION_COMPONENTS: Record<Section, ComponentType> = {
 export function Dashboard({ user, subscriptionStatus, daysLeft, onSignOut }: DashboardProps) {
   const [activeSection, setActiveSection] = useState<Section>('overview')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
 
   const SectionComponent = SECTION_COMPONENTS[activeSection]
 
@@ -47,9 +49,16 @@ export function Dashboard({ user, subscriptionStatus, daysLeft, onSignOut }: Das
   }
 
   function handleUpgrade() {
-    // Navigate to paywall — in this SaaS model we just open a new page
-    // but since status is still 'trial', the app stays open
-    window.open('mailto:?subject=StudyCC%20Upgrade%20-%20%E2%82%B9100%2Fmonth', '_blank')
+    setShowPaywall(true)
+  }
+
+  // --- UPDATED: Paywall early return with the onBack handler ---
+  if (showPaywall) {
+    return (
+      <PaywallPage
+        onBack={() => setShowPaywall(false)}
+      />
+    )
   }
 
   return (
