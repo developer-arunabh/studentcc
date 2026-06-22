@@ -88,8 +88,41 @@ export function Dashboard({ user, subscriptionStatus, daysLeft, onSignOut }: Das
           />
 
           {/* Page Content */}
-          <main className="flex-1 overflow-y-auto pb-24 lg:pb-6">
-            <div className="max-w-5xl mx-auto px-4 py-6">
+          <main className="relative flex-1 overflow-y-auto pb-24 lg:pb-6">
+            {/* Background Lighting */}
+{/* Premium Background Lighting */}
+<div className="absolute inset-0 overflow-hidden pointer-events-none">
+
+  {/* Blue Spotlight */}
+  <div
+    className="
+      absolute
+      top-20
+      right-20
+      w-[280px]
+      h-[280px]
+      bg-blue-500/5
+      rounded-full
+      blur-[100px]
+    "
+  />
+
+  {/* Purple Accent */}
+  <div
+    className="
+      absolute
+      bottom-20
+      left-20
+      w-[220px]
+      h-[220px]
+      bg-violet-500/5
+      rounded-full
+      blur-[90px]
+    "
+  />
+
+</div>
+            <div className="relative z-10 max-w-5xl mx-auto px-4 py-6">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeSection}

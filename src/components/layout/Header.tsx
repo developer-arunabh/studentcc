@@ -1,8 +1,10 @@
-import { Sun, Moon, LogOut, Menu, BookOpen } from 'lucide-react'
+import { LogOut, Menu, BookOpen } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { useClock } from '../../hooks/useClock'
 import { useStudy } from '../../context/StudyContext'
 import type { Section } from '../../types'
+import { ThemeToggle } from '../shared/ThemeToggle'
+
 
 const SECTION_LABELS: Record<Section, string> = {
   overview: 'Overview',
@@ -77,13 +79,10 @@ export function Header({ user, activeSection, onSignOut, onMenuToggle }: HeaderP
       )}
 
       {/* Theme toggle */}
-      <button
-        onClick={toggleTheme}
-        className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-        title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      >
-        {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-      </button>
+<ThemeToggle
+  isDark={isDark}
+  onToggle={toggleTheme}
+/>
 
       {/* User avatar */}
       <div className="flex items-center gap-2">

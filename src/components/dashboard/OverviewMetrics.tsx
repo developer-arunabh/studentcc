@@ -14,22 +14,159 @@ interface StatCardProps {
   delay?: number
 }
 
-function StatCard({ icon: Icon, label, value, sub, color, delay = 0 }: StatCardProps) {
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  color,
+  delay = 0,
+}: StatCardProps) {
+  const glowMap: Record<string, string> = {
+    orange: 'bg-orange-500/20',
+    blue: 'bg-blue-500/20',
+    green: 'bg-emerald-500/20',
+    purple: 'bg-purple-500/20',
+  }
+
+  const gradientMap: Record<string, string> = {
+    orange:
+      'bg-gradient-to-br from-orange-400 via-orange-500 to-red-500 text-white',
+    blue:
+      'bg-gradient-to-br from-blue-400 via-blue-500 to-cyan-500 text-white',
+    green:
+      'bg-gradient-to-br from-emerald-400 via-green-500 to-teal-500 text-white',
+    purple:
+      'bg-gradient-to-br from-violet-400 via-purple-500 to-fuchsia-500 text-white',
+  }
+
+  const type = color.includes('orange')
+    ? 'orange'
+    : color.includes('blue')
+    ? 'blue'
+    : color.includes('emerald')
+    ? 'green'
+    : 'purple'
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4 }}
-      className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow"
+      whileHover={{
+        y: -8,
+        scale: 1.02,
+      }}
+      className="
+        group
+        relative
+        overflow-hidden
+        bg-white
+        dark:bg-slate-800
+        rounded-3xl
+        p-5
+        border
+        border-slate-100
+        dark:border-slate-700
+        shadow-sm
+        hover:shadow-2xl
+        transition-all
+        duration-300
+      "
     >
-      <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl ${color} mb-3`}>
+      {/* Glow */}
+      <div
+        className={`
+          absolute
+          -top-10
+          -right-10
+          w-40
+          h-40
+          rounded-full
+          blur-3xl
+          opacity-0
+          group-hover:opacity-100
+          transition-all
+          duration-500
+          ${glowMap[type]}
+        `}
+      />
+
+      {/* Light Sweep */}
+      <div
+        className="
+          absolute
+          inset-0
+          opacity-0
+          group-hover:opacity-100
+          transition-opacity
+          duration-500
+          overflow-hidden
+        "
+      >
+        <div
+          className="
+            absolute
+            -left-20
+            top-0
+            h-full
+            w-20
+            rotate-12
+            bg-white/10
+            blur-xl
+            animate-pulse
+          "
+        />
+      </div>
+
+      {/* Icon */}
+      <div
+        className={`
+          relative
+          z-10
+          inline-flex
+          items-center
+          justify-center
+          w-12
+          h-12
+          rounded-2xl
+          shadow-lg
+          ${gradientMap[type]}
+        `}
+      >
         <Icon className="w-5 h-5" />
       </div>
-      <p className="text-2xl font-bold text-slate-900 dark:text-white" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+
+      {/* Number */}
+      <motion.p
+        whileHover={{ scale: 1.05 }}
+        className="
+          relative
+          z-10
+          text-3xl
+          font-bold
+          text-slate-900
+          dark:text-white
+          mt-4
+        "
+        style={{
+          fontFamily: 'Plus Jakarta Sans, sans-serif',
+        }}
+      >
         {value}
+      </motion.p>
+
+      {/* Label */}
+      <p className="relative z-10 text-sm text-slate-500 dark:text-slate-400 mt-1">
+        {label}
       </p>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>
-      {sub && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{sub}</p>}
+
+      {/* Sub */}
+      {sub && (
+        <p className="relative z-10 text-xs text-slate-400 dark:text-slate-500 mt-1">
+          {sub}
+        </p>
+      )}
     </motion.div>
   )
 }

@@ -5,6 +5,7 @@ import {
   RotateCcw, Timer, Target, BarChart3, X, BookOpenCheck,
 } from 'lucide-react'
 import type { Section } from '../../types'
+import './Sidebar.css'
 
 const NAV_ITEMS: { id: Section; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -43,20 +44,24 @@ function NavItem({
   return (
     <button
       onClick={onClick}
-      className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-        isActive
-          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-          : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-100'
-      } ${compact ? 'justify-center px-2' : ''}`}
+      className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+  isActive
+    ? 'sidebar-active'
+    : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-100'
+} ${compact ? 'justify-center px-2' : ''}`}
     >
       <Icon className={`flex-shrink-0 ${compact ? 'w-5 h-5' : 'w-4 h-4'}`} />
       {!compact && <span>{item.label}</span>}
       {isActive && !compact && (
-        <motion.div
-          layoutId="active-sidebar"
-          className="absolute inset-0 bg-blue-600 rounded-xl -z-10"
-        />
-      )}
+  <>
+    <motion.div
+      layoutId="active-sidebar"
+      className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 -z-10"
+    />
+
+    <div className="absolute inset-0 rounded-xl pointer-events-none glow-overlay" />
+  </>
+)}
     </button>
   )
 }

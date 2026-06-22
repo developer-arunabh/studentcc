@@ -13,6 +13,7 @@ import {
 import { useStudy } from '../../context/StudyContext'
 import { todayStr, formatTimer } from '../../utils/date'
 import type { FocusMode as FocusModeType } from '../../types'
+import './FocusModeSelector.css'
 
 const MODES: { 
   id: FocusModeType; 
@@ -174,26 +175,28 @@ export function FocusMode() {
 
   return (
     <div className="space-y-6 flex flex-col items-center">
-      {/* Mode Selector */}
-      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/50 rounded-xl p-1 w-full max-w-sm">
-        {MODES.map((m) => {
-          const Icon = m.icon
-          return (
-            <button
-              key={m.id}
-              onClick={() => switchMode(m.id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                mode === m.id
-                  ? `${m.bg} text-white shadow-sm`
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {m.label}
-            </button>
-          )
-        })}
-      </div>
+{/* Mode Selector */}
+<div className="radio-inputs mx-auto">
+  {MODES.map((m) => {
+    const Icon = m.icon
+
+    return (
+      <label className="radio" key={m.id}>
+        <input
+          type="radio"
+          name="focus-mode"
+          checked={mode === m.id}
+          onChange={() => switchMode(m.id)}
+        />
+
+        <span className="name flex items-center justify-center gap-2">
+          <Icon className="w-4 h-4" />
+          {m.label}
+        </span>
+      </label>
+    )
+  })}
+</div>
 
       {/* Timer Circle */}
       <motion.div
