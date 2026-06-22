@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   CheckCircle,
@@ -26,9 +27,26 @@ interface PaywallPageProps {
 }
 
 export function PaywallPage({ onBack }: PaywallPageProps) {
+  const [showQR, setShowQR] = useState(false)
+
   async function handleSignOut() {
     await supabase.auth.signOut()
   }
+
+  const whatsappMessage = encodeURIComponent(
+    `Hi,
+
+I have subscribed to Student Command Center for ₹100/month.
+
+Please activate my premium account.
+
+Transaction ID:
+(Please paste here)
+
+I am attaching the payment screenshot.
+
+Thank you.`
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
@@ -43,7 +61,6 @@ export function PaywallPage({ onBack }: PaywallPageProps) {
           transition={{ duration: 0.4 }}
           className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden"
         >
-          {/* Back Button */}
           {onBack && (
             <div className="p-4 border-b border-slate-100 dark:border-slate-700">
               <button
@@ -56,7 +73,6 @@ export function PaywallPage({ onBack }: PaywallPageProps) {
             </div>
           )}
 
-          {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-center">
             <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 rounded-2xl mb-4">
               <BookOpen className="w-7 h-7 text-white" />
@@ -126,17 +142,54 @@ export function PaywallPage({ onBack }: PaywallPageProps) {
               </h3>
 
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
-                UPI • Debit Card • Credit Card • Net Banking
+                UPI Payment
               </p>
 
-              <a
-                href="https://www.instamojo.com/yourusername/studyapp"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl transition-all shadow-lg shadow-blue-600/25"
-              >
-                Upgrade Now →
-              </a>
+              {!showQR ? (
+                <button
+                  onClick={() => setShowQR(true)}
+                  className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl transition-all shadow-lg shadow-blue-600/25"
+                >
+                  Upgrade Now →
+                </button>
+              ) : (
+                <div className="space-y-5">
+                  <div>
+                    <img
+                      src="/upi-qr.png"
+                      alt="UPI QR Code"
+                      className="w-72 mx-auto rounded-xl border border-slate-200"
+                    />
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-slate-900 dark:text-white">
+                      Scan QR & Pay ₹100
+                    </h4>
+
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                      Complete payment and send the payment screenshot on
+                      WhatsApp for account activation.
+                    </p>
+                  </div>
+
+                  <a
+                    href={`https://wa.me/916200616314?text=${whatsappMessage}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3 rounded-xl transition-all"
+                  >
+                    I've Paid – Activate Account
+                  </a>
+
+                  <button
+                    onClick={() => setShowQR(false)}
+                    className="text-sm text-slate-500 hover:text-slate-700"
+                  >
+                    Hide QR
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Activation Notice */}
@@ -147,7 +200,7 @@ export function PaywallPage({ onBack }: PaywallPageProps) {
               </p>
 
               <a
-                href="https://wa.me/916200616314"
+                href={`https://wa.me/916200616314?text=${whatsappMessage}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block mt-2 font-semibold text-green-600 hover:text-green-700"

@@ -1,14 +1,38 @@
 import { useState, useEffect, useRef, useCallback, type ComponentType } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Pause, RotateCcw, Coffee, Brain, Zap } from 'lucide-react'
+import { 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  Coffee, 
+  Brain, 
+  Zap, 
+  Volume2, 
+  VolumeX 
+} from 'lucide-react'
 import { useStudy } from '../../context/StudyContext'
 import { todayStr, formatTimer } from '../../utils/date'
 import type { FocusMode as FocusModeType } from '../../types'
 
-const MODES: { id: FocusModeType; label: string; icon: ComponentType<{ className?: string }>; duration: number; color: string; bg: string }[] = [
+const MODES: { 
+  id: FocusModeType; 
+  label: string; 
+  icon: ComponentType<{ className?: string }>; 
+  duration: number; 
+  color: string; 
+  bg: string 
+}[] = [
   { id: 'focus', label: 'Focus', icon: Brain, duration: 25 * 60, color: '#2563EB', bg: 'bg-blue-600' },
   { id: 'short-break', label: 'Short Break', icon: Coffee, duration: 5 * 60, color: '#059669', bg: 'bg-emerald-500' },
   { id: 'long-break', label: 'Long Break', icon: Zap, duration: 15 * 60, color: '#7C3AED', bg: 'bg-purple-600' },
+]
+
+const focusTracks = [
+  'https://zxobhukjmdpxciyfbreg.supabase.co/storage/v1/object/public/focus-music/focus1.mp3',
+  'https://zxobhukjmdpxciyfbreg.supabase.co/storage/v1/object/public/focus-music/focus2.mp3',
+  'https://zxobhukjmdpxciyfbreg.supabase.co/storage/v1/object/public/focus-music/focus3.mp3',
+  'https://zxobhukjmdpxciyfbreg.supabase.co/storage/v1/object/public/focus-music/focus4.mp3',
+  'https://zxobhukjmdpxciyfbreg.supabase.co/storage/v1/object/public/focus-music/focus5.mp3',
 ]
 
 export function FocusMode() {
@@ -18,7 +42,11 @@ export function FocusMode() {
   const [mode, setMode] = useState<FocusModeType>('focus')
   const [timeLeft, setTimeLeft] = useState(25 * 60)
   const [isRunning, setIsRunning] = useState(false)
+  const [muted, setMuted] = useState(false)
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
   const modeConfig = MODES.find((m) => m.id === mode)!
 
   const today = todayStr()
@@ -31,8 +59,36 @@ export function FocusMode() {
   const progress = (timeLeft / totalDuration) * 100
   const circumference = 2 * Math.PI * 110 // radius = 110
 
+  // Audio Control Helpers
+  const stopFocusMusic = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
+  }, [])
+
+  const startFocusMusic = useCallback(() => {
+    if (mode !== 'focus') return
+
+    const randomTrack = FOCUS_TRACKS[Math.floor(Math.random() * FOCUS_TRACKS.length)]
+
+    if (audioRef.current) {
+      audioRef.current.pause()
+    }
+
+    const audio = new Audio(randomTrack)
+    audio.loop = true
+    audio.volume = 0.25
+    audio.muted = muted
+
+    audio.play().catch(() => {})
+    audioRef.current = audio
+  }, [mode, muted])
+
+  // Complete Session Handler
   const handleComplete = useCallback(() => {
     setIsRunning(false)
+    stopFocusMusic()
     completeFocusSession({
       date: todayStr(),
       duration: modeConfig.duration / 60,
@@ -43,10 +99,10 @@ export function FocusMode() {
     } else {
       addToast('Break over! Ready to focus again?', 'info')
     }
-    // Auto-reset
     setTimeLeft(modeConfig.duration)
-  }, [mode, modeConfig.duration, completeFocusSession, addToast])
+  }, [mode, modeConfig.duration, completeFocusSession, addToast, stopFocusMusic])
 
+  // Main Ticker Effect
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
@@ -62,10 +118,23 @@ export function FocusMode() {
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
   }, [isRunning, handleComplete])
 
+  // Component Cleanup on Unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+      }
+    }
+  }, [])
+
+  // User Actions
   function switchMode(newMode: FocusModeType) {
+    stopFocusMusic()
     setIsRunning(false)
     setMode(newMode)
     const cfg = MODES.find((m) => m.id === newMode)!
@@ -74,7 +143,32 @@ export function FocusMode() {
 
   function handleReset() {
     setIsRunning(false)
+    stopFocusMusic()
     setTimeLeft(modeConfig.duration)
+  }
+
+  function togglePlayPause() {
+    if (!isRunning) {
+      setIsRunning(true)
+      if (audioRef.current) {
+        audioRef.current.play().catch(() => {})
+      } else {
+        startFocusMusic()
+      }
+    } else {
+      setIsRunning(false)
+      if (audioRef.current) {
+        audioRef.current.pause()
+      }
+    }
+  }
+
+  function toggleMute() {
+    const nextMuted = !muted
+    setMuted(nextMuted)
+    if (audioRef.current) {
+      audioRef.current.muted = nextMuted
+    }
   }
 
   return (
@@ -108,14 +202,12 @@ export function FocusMode() {
         className="relative flex items-center justify-center"
         style={{ width: 280, height: 280 }}
       >
-        {/* SVG Ring */}
         <svg
           width="280"
           height="280"
           className="absolute inset-0 -rotate-90"
           style={{ filter: isRunning ? `drop-shadow(0 0 12px ${modeConfig.color}60)` : undefined }}
         >
-          {/* Track */}
           <circle
             cx="140"
             cy="140"
@@ -125,7 +217,6 @@ export function FocusMode() {
             strokeWidth="8"
             className="text-slate-100 dark:text-slate-700"
           />
-          {/* Progress */}
           <motion.circle
             cx="140"
             cy="140"
@@ -140,7 +231,6 @@ export function FocusMode() {
           />
         </svg>
 
-        {/* Timer Text */}
         <div className="relative text-center z-10">
           <AnimatePresence mode="wait">
             <motion.span
@@ -177,14 +267,19 @@ export function FocusMode() {
         </button>
 
         <button
-          onClick={() => setIsRunning(!isRunning)}
+          onClick={togglePlayPause}
           className="w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg transition-all hover:scale-105 active:scale-95"
           style={{ backgroundColor: modeConfig.color, boxShadow: `0 8px 24px ${modeConfig.color}50` }}
         >
           {isRunning ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
         </button>
 
-        <div className="w-11 h-11" /> {/* spacer */}
+        <button
+          onClick={toggleMute}
+          className="w-11 h-11 rounded-full border-2 border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-400"
+        >
+          {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+        </button>
       </div>
 
       {/* Today's Stats */}
