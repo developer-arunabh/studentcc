@@ -79,17 +79,17 @@ export function StudyProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(initialState)
   const [toasts, setToasts] = useState<ToastMessage[]>([])
   const dataLoaded = useRef(false)
-  const firstSave = useRef(false)
+  const isInitialLoad = useRef(true)
 
-  // Load cloud data into state once
+  // Load cloud data into state once when it arrives
   useEffect(() => {
     if (!isLoading && !dataLoaded.current) {
       dataLoaded.current = true
       if (cloudData) {
         setState((prev) => ({ ...prev, ...cloudData }))
       }
-      // Allow saves after initial load
-      setTimeout(() => { firstSave.current = true }, 500)
+      // Mark initial load done after state settles
+      setTimeout(() => { isInitialLoad.current = false }, 800)
     }
   }, [isLoading, cloudData])
 
@@ -98,9 +98,9 @@ export function StudyProvider({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle('dark', state.theme === 'dark')
   }, [state.theme])
 
-  // Save state to cloud on change
+  // Save state to Supabase on every change (skip during initial load)
   useEffect(() => {
-    if (!firstSave.current) return
+    if (isInitialLoad.current) return
     save(state)
   }, [state, save])
 

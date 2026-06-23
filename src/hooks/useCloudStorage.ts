@@ -4,22 +4,23 @@ import { supabase } from '../lib/supabase'
 import type { AppState } from '../types'
 
 const STORAGE_KEY = 'study-command-center-backup'
+const DEBOUNCE_MS = 1500
 
 export function useCloudStorage(user: User | null) {
   const [cloudData, setCloudData] = useState<AppState | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isSaving = useRef(false)
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Load data from Supabase on user change
+  // ── Load from Supabase on login ──────────────────────────────────────
   useEffect(() => {
     if (!user) {
       setIsLoading(false)
       return
     }
 
+    setIsLoading(true)
+
     async function loadData() {
-      setIsLoading(true)
       try {
         const { data, error } = await supabase
           .from('study_data')
@@ -27,25 +28,31 @@ export function useCloudStorage(user: User | null) {
           .eq('user_id', user!.id)
           .single()
 
-        if (!error && data?.data && Object.keys(data.data).length > 0) {
+        if (!error && data?.data && Object.keys(data.data as object).length > 0) {
+          // Cloud data found — use it
           setCloudData(data.data as AppState)
-        } else {
-          // Attempt localStorage migration
+          // Also sync to localStorage as backup
           try {
-            const local = localStorage.getItem(STORAGE_KEY)
-            if (local) {
-              const parsed = JSON.parse(local) as AppState
-              setCloudData(parsed)
-            }
-          } catch {
-            // ignore parse errors
+            localStorage.setItem(STORAGE_KEY + '_' + user!.id, JSON.stringify(data.data))
+          } catch { /* ignore */ }
+        } else {
+          // No cloud data — try user-specific localStorage first, then generic
+          const localKey = STORAGE_KEY + '_' + user!.id
+          const genericKey = STORAGE_KEY
+          const raw = localStorage.getItem(localKey) || localStorage.getItem(genericKey)
+          if (raw) {
+            try {
+              setCloudData(JSON.parse(raw) as AppState)
+            } catch { /* ignore */ }
           }
         }
-      } catch {
-        // Supabase not configured — fall back to localStorage
+      } catch (err) {
+        console.error('[useCloudStorage] Failed to load from Supabase:', err)
+        // Fall back to localStorage
         try {
-          const local = localStorage.getItem(STORAGE_KEY)
-          if (local) setCloudData(JSON.parse(local) as AppState)
+          const raw = localStorage.getItem(STORAGE_KEY + '_' + user!.id)
+            || localStorage.getItem(STORAGE_KEY)
+          if (raw) setCloudData(JSON.parse(raw) as AppState)
         } catch { /* ignore */ }
       } finally {
         setIsLoading(false)
@@ -55,31 +62,38 @@ export function useCloudStorage(user: User | null) {
     loadData()
   }, [user?.id])
 
+  // ── Save to Supabase (debounced) ─────────────────────────────────────
   const save = useCallback(
     (state: AppState) => {
-      // Always backup to localStorage
+      if (!user) return
+
+      // Always save to localStorage immediately (per-user key)
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+        localStorage.setItem(STORAGE_KEY + '_' + user.id, JSON.stringify(state))
       } catch { /* ignore quota errors */ }
 
-      if (!user || isSaving.current) return
-
-      // Debounce Supabase saves by 1 second
-      if (timerRef.current) clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(async () => {
-        isSaving.current = true
+      // Debounce the Supabase write
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+      debounceTimer.current = setTimeout(async () => {
         try {
-          await supabase.from('study_data').upsert({
-            user_id: user.id,
-            data: state,
-            updated_at: new Date().toISOString(),
-          })
-        } catch {
-          // Silently fail — data is already in localStorage
-        } finally {
-          isSaving.current = false
+          const { error } = await supabase
+            .from('study_data')
+            .upsert(
+              {
+                user_id: user.id,
+                data: state,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id' }
+            )
+
+          if (error) {
+            console.error('[useCloudStorage] Save failed:', error.message)
+          }
+        } catch (err) {
+          console.error('[useCloudStorage] Unexpected save error:', err)
         }
-      }, 1000)
+      }, DEBOUNCE_MS)
     },
     [user?.id]
   )
