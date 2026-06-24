@@ -33,14 +33,28 @@ export function useCloudStorage(user: User | null) {
           console.error('[Storage] Load error:', error.message)
         }
 
-        if (data?.data && Object.keys(data.data as object).length > 0) {
-          console.log('[Storage] ✅ Loaded from Supabase')
-          setCloudData(data.data as AppState)
-          // Sync to localStorage backup
-          try { localStorage.setItem(LS_KEY(user!.id), JSON.stringify(data.data)) } catch {}
+        // --- REPLACED BLOCK START ---
+        if (data?.data) {
+          const parsed =
+            typeof data.data === 'string'
+              ? JSON.parse(data.data)
+              : data.data
+
+          console.log('[Storage] Loaded from Supabase:', parsed)
+
+          setCloudData(parsed as AppState)
+
+          try {
+            localStorage.setItem(
+              LS_KEY(user!.id),
+              JSON.stringify(parsed)
+            )
+          } catch {}
+
           setIsLoading(false)
           return
         }
+        // --- REPLACED BLOCK END ---
 
         // 2. No cloud data — ensure the row EXISTS (create it if not)
         console.log('[Storage] No cloud data found, creating row...')
