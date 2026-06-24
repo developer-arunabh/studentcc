@@ -78,6 +78,7 @@ export function useCloudStorage(user: User | null) {
   }, [user?.id])
 
   const save = useCallback((state: AppState) => {
+    console.log('[SAVE DATA]', state)
     if (!user) return
 
     // 1. Save to localStorage immediately
