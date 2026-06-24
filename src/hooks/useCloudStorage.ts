@@ -27,14 +27,14 @@ export function useCloudStorage(user: User | null) {
           .from('study_data')
           .select('data')
           .eq('user_id', user!.id)
-          .maybeSingle()  // won't error if row doesn't exist
+          .maybeSingle()
 
         if (error) {
           console.error('[Storage] Load error:', error.message)
         }
 
-        // --- REPLACED BLOCK START ---
-        if (data?.data) {
+        // Check if valid data exists and isn't just an empty object
+        if (data?.data && Object.keys(data.data).length > 0) {
           const parsed =
             typeof data.data === 'string'
               ? JSON.parse(data.data)
@@ -51,10 +51,10 @@ export function useCloudStorage(user: User | null) {
             )
           } catch {}
 
-          setIsLoading(false)
+          // Fall through to the finally block to turn off loading safely 
+          // after state updates have been scheduled
           return
         }
-        // --- REPLACED BLOCK END ---
 
         // 2. No cloud data — ensure the row EXISTS (create it if not)
         console.log('[Storage] No cloud data found, creating row...')
