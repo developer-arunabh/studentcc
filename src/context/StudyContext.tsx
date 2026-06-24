@@ -84,13 +84,9 @@ export function StudyProvider({ children }: { children: ReactNode }) {
     console.log('[Context] Initialising state from', cloudData ? 'Supabase ✅' : 'initial state')
     setState(initial)
 
-    // Settle cleanly for 1 second before opening up database save writes
-    const timer = setTimeout(() => { 
-      saveEnabled.current = true 
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [isLoading, cloudData, state])
+    // Enable saves after a short settle so we don't immediately re-save what we just loaded
+    setTimeout(() => { saveEnabled.current = true }, 500)
+  }, [isLoading, cloudData])
 
   // ── Step 2: Save to Supabase whenever state changes ───────────────────────
   useEffect(() => {
